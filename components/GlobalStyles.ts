@@ -1,28 +1,28 @@
+/* eslint-disable prettier/prettier */
 /* fonts */
 export const FontFamily = {
-  bebasNeueRegular: "BebasNeue-Regular",
-  interRegular: "Inter-Regular",
-  interSemiBold: "Inter-SemiBold",
-  interMedium: "Inter-Medium",
-  robotoMedium: "Roboto-Medium",
+  bebasNeueRegular: 'BebasNeue-Regular',
+  interRegular: 'Inter-Regular',
+  interSemiBold: 'Inter-SemiBold',
+  interBold: "Inter-Bold",
+  interMedium: 'Inter-Medium',
 };
 
   /* font sizes */
 export const FontSize = {
-  size_mini: 15,
+  size_9xl: 28,
   size_base: 16,
+  size_xs: 12,
+  size_sm: 14,
 };
 
 /* Colors */
 export const Color = {
-  m3RefNeutralNeutral10: "#1d1b20",
-  colorGray_100: "#18181a",
-  colorGray_200: "rgba(255, 255, 255, 0.55)",
-  colorBlack: "#000",
-};
-
-/* border radiuses */
-export const Border = {
-  br_xs: 12,
-  br_6xl: 25,
+  colorGray_100: '#18181a',
+  colorGray_200: '#3B3B40',
+  colorGray_400: '#5E5E66',
+  colorHalfWhite: '#FFFFFF8C',
+  colorBlack: '#000',
+  colorDarkslategray: '#4b5649',
+  colorGreen: '#788A74',
 };
