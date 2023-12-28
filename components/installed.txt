@@ -1,0 +1,11 @@
+react-native-linear-gradient -> https://github.com/react-native-linear-gradient/react-native-linear-gradient
+npm install react-native-linear-gradient
+
+Add Costum Fonts (Notion)
+
+@react-navigation/native -> https://reactnative.dev/docs/navigation 
+npm install @react-navigation/native @react-navigation/native-stack
+npm install react-native-screens react-native-safe-area-context
+
+React Native Vector Icons -> https://github.com/oblador/react-native-vector-icons
+npm install --save react-native-vector-icons
