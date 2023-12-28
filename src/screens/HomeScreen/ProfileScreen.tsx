@@ -2,15 +2,15 @@
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 
-import { SafeAreaView, View, StyleSheet, Text, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 function HomeScreen() {
   const navigation = useNavigation();
-  //const home = (<Icon.Button name="home" backgroundColor="#18181a" onPress={() => navigation.navigate('Home')} />);
-  //const profile = (<Icon.Button name="user" backgroundColor="#18181a" onPress={() => navigation.navigate('Profile')} />);
+  const home = (<Icon name="home" size={24} color="#18181a" />)
+  const profile = (<Icon name="user" size={24} color="#18181a" />);
 
   return (
     <LinearGradient
@@ -19,37 +19,36 @@ function HomeScreen() {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <SafeAreaView>
-        <View style={styles.largeTopAppBar}>
-          <Text style={styles.largeTopAppBar__title}>Áudios</Text>
-        </View>
-        <View style={styles.body}>
-          <Pressable style={styles.addButton}>
-            <Text>Adicionar áudios</Text>
-          </Pressable>
-        </View>
-        <View style={styles.bottomMenu}>
-          <Text>Recentes</Text>
+      <View style={styles.mediumTopAppBar}>
+        <Text style={styles.mediumTopAppBar__title}>Perfil</Text>
+      </View>
+      <View style={styles.body}>
 
-        </View>
-      </SafeAreaView>
+      </View>
+      <View style={styles.bottomMenu}>
+        <Pressable style={styles.bottonMenu__unselected} onPress={() => navigation.navigate('HomeScreen')}>
+          {home}
+        </Pressable>
+        <Pressable style={styles.bottonMenu__selected}>
+          {profile}
+        </Pressable>
+      </View>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
   },
-  largeTopAppBar: {
+  mediumTopAppBar: {
     width: '100%',
     height: 112,
     paddingHorizontal: 16,
     paddingBottom: 24,
     paddingTop: 20,
   },
-  largeTopAppBar__title: {
+  mediumTopAppBar__title: {
     marginTop: 32,
     fontSize: FontSize.size_9xl,
     letterSpacing: 0.3,
@@ -58,7 +57,9 @@ const styles = StyleSheet.create({
     color: Color.colorGray_100,
   },
   body: {
+    flex: 1,
     paddingHorizontal: 16,
+    backgroundColor: 'red',
   },
   addButton: {
     borderRadius: 100,
@@ -71,12 +72,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 80,
     paddingHorizontal: 16,
+    paddingVertical: 16,
+    flexDirection: 'row',
     justifyContent: 'space-evenly',
   },
   bottonMenu__selected: {
+    width: 64,
+    height: 32,
     borderRadius: 16,
     backgroundColor: Color.colorGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottonMenu__unselected: {
     width: 64,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
