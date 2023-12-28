@@ -72,9 +72,9 @@ function LoginScreen() {
             </Pressable>
           </>
         }
-        <View>
+        <View style={styles.newAccount}>
           <Pressable onPress={() => navigation.navigate('RegistrationScreen')}>
-            <Text style={styles.pressableText__text}>Registe-se</Text>
+            <Text style={styles.pressableText__text}>Não tem uma conta?</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginHorizontal: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   pressableText__text: {
     fontSize: FontSize.size_base,
@@ -161,6 +161,12 @@ const styles = StyleSheet.create({
     fontSize: FontSize.size_sm,
     fontFamily: FontFamily.interSemiBold,
     color: Color.colorHalfWhite,
+  },
+  newAccount: {
+    marginTop: 16,
+    marginHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
 });
 
