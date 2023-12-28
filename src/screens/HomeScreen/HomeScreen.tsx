@@ -9,8 +9,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 function HomeScreen() {
   const navigation = useNavigation();
-  //const home = (<Icon.Button name="home" backgroundColor="#18181a" onPress={() => navigation.navigate('Home')} />);
-  //const profile = (<Icon.Button name="user" backgroundColor="#18181a" onPress={() => navigation.navigate('Profile')} />);
+  const profile = (<Icon.Button name="user" backgroundColor="#18181a" onPress={() => navigation.navigate('ProfileScreen')} />);
 
   return (
     <LinearGradient
