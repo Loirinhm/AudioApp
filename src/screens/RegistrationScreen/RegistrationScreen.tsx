@@ -45,7 +45,7 @@ function RegistrationScreen() {
     >
       <SafeAreaView>
         <View style={styles.largeTopAppBar}>
-          <Text style={styles.largeTopAppBar__title}>App Name</Text>
+          <Text style={styles.largeTopAppBar__title}>Audio App</Text>
         </View>
         <View style={styles.inputFullName}>
           <TextInput
@@ -61,6 +61,7 @@ function RegistrationScreen() {
             placeholder="Email"
             value={email}
             onChangeText={(text) => setEmail(text)}
+            autoCapitalize="none"
           />
         </View>
         <View style={styles.inputPassword}>
@@ -70,6 +71,7 @@ function RegistrationScreen() {
             value={password}
             onChangeText={(text) => setPassword(text)}
             secureTextEntry={true}
+            autoCapitalize="none"
           />
         </View>
         <View style={styles.inputConfirmPassword}>
@@ -79,12 +81,8 @@ function RegistrationScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={true}
+            autoCapitalize="none"
           />
-        </View>
-        <View style={styles.pressableText}>
-          <Pressable>
-            <Text style={styles.pressableText__text}>Login</Text>
-          </Pressable>
         </View>
         {loading ? <ActivityIndicator size="large" color="#0000ff" /> :
           <>
@@ -93,6 +91,11 @@ function RegistrationScreen() {
             </Pressable>
           </>
         }
+        <View style={styles.pressableText}>
+          <Pressable onPress={() => navigation.navigate('LoginScreen')}>
+            <Text style={styles.pressableText__text}>Já tem uma conta?</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
     </LinearGradient >
   );
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginHorizontal: 16,
     flexDirection: 'row',
-    alignContent: 'flex-end',
+    justifyContent: 'center',
   },
   pressableText__text: {
     fontSize: FontSize.size_base,

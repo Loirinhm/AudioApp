@@ -37,13 +37,12 @@ function LoginScreen() {
     >
       <SafeAreaView>
         <View style={styles.largeTopAppBar}>
-          <Text style={styles.largeTopAppBar__title}>App Name</Text>
+          <Text style={styles.largeTopAppBar__title}>Audio App</Text>
         </View>
         <View style={styles.inputEmail}>
           <TextInput
             style={styles.inputText}
             placeholder="Email"
-            placeholderTextColor={Color.colorGray_100}
             value={email}
             onChangeText={(text) => setEmail(text)}
             autoCapitalize="none"
@@ -53,7 +52,6 @@ function LoginScreen() {
           <TextInput
             style={styles.inputText}
             placeholder="Palavra-passe"
-            placeholderTextColor={Color.colorGray_100}
             value={password}
             onChangeText={(text) => setPassword(text)}
             secureTextEntry={true}

@@ -19,7 +19,7 @@ function Login() {
     >
       <SafeAreaView>
         <View style={styles.largeTopAppBar}>
-          <Text style={styles.largeTopAppBar__title}>App Name</Text>
+          <Text style={styles.largeTopAppBar__title}>Audio App</Text>
         </View>
         <View style={styles.body}>
           <Pressable style={styles.body__buttonGoogle}>
