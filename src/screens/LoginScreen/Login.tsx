@@ -28,9 +28,8 @@ function Login() {
           </Pressable>
           <Pressable style={styles.body__buttonFacebook}>
             <Text style={styles.button__text}>Login com Facebook</Text>
-            <Image resizeMode="cover" source={{ uri: 'Google.png' }} />
           </Pressable>
-          <Pressable style={styles.body__loginEmail} onPress={() => navigation.navigate('LoginEmail')}>
+          <Pressable style={styles.body__loginEmail} onPress={() => navigation.navigate('LoginScreen')}>
             <Text style={styles.loginEmail__text}>Login com email</Text>
           </Pressable>
         </View>
