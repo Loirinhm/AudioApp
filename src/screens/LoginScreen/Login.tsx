@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import React from 'react';
 
-import { View, StyleSheet, Pressable, Text, Image, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Pressable, Text, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 
@@ -24,7 +24,6 @@ function Login() {
         <View style={styles.body}>
           <Pressable style={styles.body__buttonGoogle}>
             <Text style={styles.button__text}>Login com Google</Text>
-            <Image resizeMode="cover" source={{ uri: 'Google.png' }} />
           </Pressable>
           <Pressable style={styles.body__buttonFacebook}>
             <Text style={styles.button__text}>Login com Facebook</Text>

@@ -50,7 +50,7 @@ function RegistrationScreen() {
         <View style={styles.inputFullName}>
           <TextInput
             style={styles.inputText}
-            placeholder="Full Name"
+            placeholder="Nome completo"
             value={fullName}
             onChangeText={setFullName}
           />
