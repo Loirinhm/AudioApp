@@ -1,20 +1,68 @@
 /* eslint-disable prettier/prettier */
-import React from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { View, StyleSheet, Text, Pressable, Image } from 'react-native';
-import { LinearGradient } from 'react-native-linear-gradient';
-import { Color, FontFamily, FontSize } from '../GlobalStyles';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
+import { useNavigation } from '@react-navigation/native';
+import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { ImagePickerResponse, launchImageLibrary } from 'react-native-image-picker';
+import { View, StyleSheet, Text, Pressable, Image, Alert } from 'react-native';
+import { LinearGradient } from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+
+import { Color, FontFamily, FontSize } from '../GlobalStyles';
 
 function HomeScreen() {
   const navigation = useNavigation();
   const auth = FIREBASE_AUTH;
   const user = auth.currentUser;
+  const storage = getStorage();
 
   const home = (<Icon name="home" size={24} color="#18181a" />)
   const profile = (<Icon name="user" size={24} color="#18181a" />);
   const settings = (<Icon name="cog" size={24} color="#18181a" />);
+
+  const [profileImage, setProfileImage] = useState(null);
+
+  const uploadProfileImage = async () => {
+    const options = {
+      mediaType: 'photos',
+      includeBase64: false,
+      maxHeight: 200,
+      maxWidth: 200,
+    };
+
+    //
+    launchImageLibrary(options, (response) => {
+      if (response.didCancel) {
+        console.log('Seleção de imagens cancelada pelo utilizador');
+      }
+      else if (response.error) {
+        console.log('Erro do seletor de imagens:', response.error);
+        Alert.alert('Erro', 'Ocorreu um erro ao selecionar a imagem de perfil.');
+      }
+      else {
+        let imageUri = response.uri || response.assets?.[0].uri;
+        setProfileImage(imageUri);
+        uploadImageToFirebase(response);
+      }
+    });
+
+    const uploadImageToFirebase = (image: ImagePickerResponse) => {
+      if (user) {
+        const userId = user.uid;
+        const storageRef = ref(storage, `users/${userId}/profileImage/${image.fileName}`);
+
+        uploadBytes(storageRef, profileImage)
+          .then(() => {
+            Alert.alert('Sucesso', 'Imagem de perfil alterada com sucesso.');
+          })
+          .catch((error) => {
+            console.log(error);
+            Alert.alert('Erro', 'Ocorreu um erro ao alterar a imagem de perfil.');
+          });
+      }
+    };
+  };
 
   return (
     <LinearGradient
@@ -30,7 +78,9 @@ function HomeScreen() {
         </Pressable>
       </View>
       <View style={styles.body}>
-        <Image style={styles.profileImage} source={user?.photoURL || undefined} />
+        <Pressable onPress={uploadProfileImage}>
+          <Image style={styles.profileImage} source={user?.photoURL || undefined} />
+        </Pressable>
         <Text style={styles.profileName} >{user?.displayName}</Text>
         <Text style={styles.profileEmail} >{user?.email}</Text>
       </View>

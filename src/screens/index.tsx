@@ -10,3 +10,5 @@ export { default as Login } from './LoginScreen/Login';
 export { default as ProfileScreen } from './HomeScreen/ProfileScreen';
 
 export { default as SettingsScreen } from './HomeScreen/SettingsScreen';
+
+export { default as AccountScreen } from './HomeScreen/AccountScreen';
