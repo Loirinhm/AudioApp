@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { FIREBASE_AUTH } from './src/firebase/firebaseConfig';
 
-import { Login, LoginScreen, HomeScreen, ProfileScreen, RegistrationScreen } from './src/screens/index';
+import { Login, LoginScreen, HomeScreen, ProfileScreen, RegistrationScreen, SettingsScreen } from './src/screens/index';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +32,7 @@ function App(): React.JSX.Element {
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
           <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
+          <Stack.Screen name='SettingsScreen' component={SettingsScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
       ) : (
         <Stack.Navigator initialRouteName="Login">

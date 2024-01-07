@@ -1,16 +1,20 @@
 /* eslint-disable prettier/prettier */
 import React from 'react';
 import { useNavigation } from '@react-navigation/native';
-
-import { View, StyleSheet, Text, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Pressable, Image } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 
 function HomeScreen() {
   const navigation = useNavigation();
+  const auth = FIREBASE_AUTH;
+  const user = auth.currentUser;
+
   const home = (<Icon name="home" size={24} color="#18181a" />)
   const profile = (<Icon name="user" size={24} color="#18181a" />);
+  const settings = (<Icon name="cog" size={24} color="#18181a" />);
 
   return (
     <LinearGradient
@@ -21,9 +25,14 @@ function HomeScreen() {
     >
       <View style={styles.mediumTopAppBar}>
         <Text style={styles.mediumTopAppBar__title}>Perfil</Text>
+        <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('SettingsScreen')}>
+          {settings}
+        </Pressable>
       </View>
       <View style={styles.body}>
-
+        <Image style={styles.profileImage} source={user?.photoURL || undefined} />
+        <Text style={styles.profileName} >{user?.displayName}</Text>
+        <Text style={styles.profileEmail} >{user?.email}</Text>
       </View>
       <View style={styles.bottomMenu}>
         <Pressable style={styles.bottonMenu__unselected} onPress={() => navigation.navigate('HomeScreen')}>
@@ -42,11 +51,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mediumTopAppBar: {
-    width: '100%',
     height: 112,
     paddingHorizontal: 16,
     paddingBottom: 24,
     paddingTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   mediumTopAppBar__title: {
     marginTop: 32,
@@ -56,17 +66,41 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.interBold,
     color: Color.colorGray_100,
   },
+  settingsButton: {
+    width: 24,
+    height: 24,
+  },
   body: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: 'red',
+    alignItems: 'center',
   },
-  addButton: {
-    borderRadius: 100,
-    width: '100%',
-    height: 56,
+  profileImage: {
+    width: 180,
+    height: 180,
     marginTop: 40,
-    backgroundColor: Color.colorGray_100,
+    borderRadius: 90,
+    borderWidth: 2,
+    borderColor: Color.colorGray_100,
+  },
+  profileName: {
+    marginTop: 42,
+    fontSize: 36,
+    letterSpacing: 0.4,
+    lineHeight: 36,
+    fontWeight: '700',
+    fontFamily: FontFamily.interBold,
+    color: '#18181a',
+    textAlign: 'center',
+  },
+  profileEmail: {
+    marginTop: 16,
+    fontSize: 16,
+    letterSpacing: 0.2,
+    lineHeight: 20,
+    fontFamily: FontFamily.interRegular,
+    color: '#18181a',
+    textAlign: 'center',
   },
   bottomMenu: {
     width: '100%',

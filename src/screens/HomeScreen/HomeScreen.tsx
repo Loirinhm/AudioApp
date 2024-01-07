@@ -1,10 +1,12 @@
 /* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
+import { FIREBASE_AUTH, FIRESTORE } from '../../firebase/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
-import { View, StyleSheet, Text, Pressable, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, collection } from 'firebase/firestore';
 import DocumentPicker from 'react-native-document-picker';
-import { FIRESTORE } from '../../firebase/firebaseConfig';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
@@ -15,32 +17,82 @@ function HomeScreen() {
   const add = (<Icon name="plus" size={24} color="#FFFFFF8C" />);
 
   const navigation = useNavigation();
-  const [audioFiles, setAudioFiles] = useState([]);
+  const storage = getStorage();
+  const auth = FIREBASE_AUTH;
+  const db = FIRESTORE;
+  const user = auth.currentUser;
 
-  const handleAddAudio = async () => {
+  // upload de ficheiros de áudio para o storage e firestore
+  const handleAudioFile = async () => {
     try {
-      // escolher um ficheiro audio
-      const res = await DocumentPicker.pick({
+      const userId = user.uid;
+      // verificar se o utilizador está autenticado
+      if (!user) {
+        Alert.alert('Erro', 'Não está autenticado.');
+        return;
+      }
+
+      // para selecionar vários ficheiros audio
+      const results = await DocumentPicker.pick({
+        allowMultiSelection: true,
         type: [DocumentPicker.types.audio],
       });
 
-      // nome único para o arquivo
-      const fileName = `audios/${Date.now()}-${res.name}`;
+      // definir 
+      const userFilesRef = collection(db, 'userFiles');
+      const docRef = await setDoc(doc(userFilesRef, userId), {});
+
+      // adicionar ficheiros áudio ao firestore e storage
+      for (const result of results) {
+
+        // adicionar ficheiros ao storage
+        const storageRef = ref(storage, `users/${userId}/audio/${result.name}`);
+        const snapshot = await uploadBytes(storageRef, result);
+
+        //
+        const audioFileRef = collection(db, `userFiles/${userId}/files`);
+
+        // adicionar ficheiros ao firestore
+        await setDoc(doc(audioFileRef), {
+          fileName: result.name,
+          fileSize: result.size,
+          fileType: result.type,
+          filePath: `users/${userId}/audio/${result.name}`,
+          timestamp: new Date().toISOString(),
+          downloadUrl: await getDownloadURL(snapshot.ref),
+        });
+      }
+      Alert.alert('Successo', 'Os ficheiros de áudio foram carregados.');
+
+    } catch (error) {
+      if (DocumentPicker.isCancel(error)) {
+        // quando o utilizador cancela a seleção de ficheiros
+      } else {
+        console.error('Error:', error);
+        Alert.alert('Erro', 'Falha ao selecionar e carregar o ficheiro de áudio.');
+      }
     }
   };
 
-  useEffect(() => {
-    const db = FIRESTORE;
-    const audioRef = firebase.database().ref('/audioFiles');
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
-    audioRef.on('value', snapshot => {
-      const data = snapshot.val();
-      const audioList = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-      setAudioFiles(audioList);
-    });
+  // useEffect(() => {
+  //   if (user) {
+  //     const userId = user.uid;
+  //     const userFilesRef = collection(firestore, 'userFiles').doc(userId).collection('files');
 
-    return () => audioRef.off();
-  }, []);
+  //     // Subscribe to user-specific file updates from Firestore
+  //     const unsubscribe = userFilesRef.onSnapshot((snapshot) => {
+  //       const files = snapshot.docs.map(doc => doc.data().fileName);
+  //       setUploadedFiles(files);
+  //     });
+
+  //     return () => {
+  //       // Unsubscribe from Firestore updates when component unmounts
+  //       unsubscribe();
+  //     };
+  //   }
+  // }, []);
 
   return (
     <LinearGradient
@@ -53,23 +105,14 @@ function HomeScreen() {
         <Text style={styles.mediumTopAppBar__title}>Áudios</Text>
       </View>
       <View style={styles.body}>
-        <Pressable style={styles.addButton}>
+        <Pressable style={styles.addButton} onPress={handleAudioFile}>
           {add}
           <Text style={styles.addButton__text}>Adicionar áudios</Text>
         </Pressable>
         <View style={styles.audioList}>
           <Text style={styles.audioList__title}>Recentes</Text>
           <ScrollView>
-            {audioFiles.length > 0 ? (
-              audioFiles.map(audio => (
-                <View key={audio.id} style={styles.audioItem}>
-                  <Text style={styles.audioItemText}>{audio.name}</Text>
-                  {/* Additional audio details or controls */}
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptyMessage}>No audio files found.</Text>
-            )}
+
           </ScrollView>
         </View>
       </View>
