@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import AudioTranscoder from 'react-native-audio-transcoder';
+import { transcode } from 'react-native-audio-transcoder';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
 
