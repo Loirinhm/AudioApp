@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Modal, Alert } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -11,6 +11,9 @@ function AccountScreen() {
   const navigation = useNavigation();
 
   const arrowLeft = (<Icon name="arrow-left" size={24} color="#18181a" />);
+  const edit = (<Icon name="edit" size={24} color="#18181a" />);
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   return (
     <LinearGradient
@@ -23,7 +26,35 @@ function AccountScreen() {
         <Pressable style={styles.returnIcon} onPress={() => navigation.navigate('SettingsScreen')}>{arrowLeft}</Pressable>
         <Text style={styles.smallTopAppBar__title}>Informações da conta</Text>
       </View>
-    </LinearGradient>
+      <View style={styles.body}>
+        <View style={styles.accountInfo}>
+          <Text style={styles.accountInfo__text}>Nome</Text>
+          <Pressable onPress={() => setModalVisible(true)}>{edit}</Pressable>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              Alert.alert('Fechado');
+              setModalVisible(!modalVisible)
+            }}>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <View style={{ width: '80%', height: '30%', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', borderRadius: 20 }}>
+                <Text style={{ fontSize: 20, fontFamily: FontFamily.interBold, color: Color.colorGray_100 }}>Editar nome</Text>
+              </View>
+            </View>
+          </Modal>
+        </View>
+        <View style={styles.accountInfo}>
+          <Text style={styles.accountInfo__text}>Endereço de e-mail</Text>
+          <Pressable>{edit}</Pressable>
+        </View>
+        <View style={styles.accountInfo}>
+          <Text style={styles.accountInfo__text}>Palavra passe</Text>
+          <Pressable>{edit}</Pressable>
+        </View>
+      </View>
+    </LinearGradient >
   );
 }
 
@@ -55,7 +86,22 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    paddingTop: 40,
     paddingHorizontal: 16,
+  },
+  accountInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+  },
+  accountInfo__text: {
+    fontSize: FontSize.size_base,
+    letterSpacing: 0.2,
+    lineHeight: 20,
+    fontFamily: FontFamily.interRegular,
+    color: Color.colorGray_100,
+    textAlign: 'left',
   },
 });
 

@@ -1,13 +1,14 @@
 /* eslint-disable prettier/prettier */
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
-import { ImagePickerResponse, launchImageLibrary } from 'react-native-image-picker';
+import { getStorage, ref as sRef, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { getDatabase, ref as dRef, set } from 'firebase/database';
+import { updateProfile } from 'firebase/auth';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { View, StyleSheet, Text, Pressable, Image, Alert } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
-
 
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
 
@@ -16,44 +17,49 @@ function HomeScreen() {
   const auth = FIREBASE_AUTH;
   const user = auth.currentUser;
   const storage = getStorage();
+  const db = getDatabase();
+
+  const [selectedImage, setSelectedImage] = React.useState(null);
 
   const home = (<Icon name="home" size={24} color="#18181a" />)
   const profile = (<Icon name="user" size={24} color="#18181a" />);
   const settings = (<Icon name="cog" size={24} color="#18181a" />);
 
-  const [profileImage, setProfileImage] = useState(null);
-
   const uploadProfileImage = async () => {
     const options = {
       mediaType: 'photos',
-      includeBase64: false,
-      maxHeight: 200,
-      maxWidth: 200,
+      quality: 1,
     };
 
-    //
+    // abrir seletor de imagens
     launchImageLibrary(options, (response) => {
       if (response.didCancel) {
         console.log('Seleção de imagens cancelada pelo utilizador');
       }
-      else if (response.error) {
-        console.log('Erro do seletor de imagens:', response.error);
+      else if (response.errorCode) {
+        console.log('Erro do seletor de imagens:', response.errorMessage);
         Alert.alert('Erro', 'Ocorreu um erro ao selecionar a imagem de perfil.');
       }
       else {
-        let imageUri = response.uri || response.assets?.[0].uri;
-        setProfileImage(imageUri);
         uploadImageToFirebase(response);
+        setSelectedImage(response.assets[0].uri);
       }
     });
 
-    const uploadImageToFirebase = (image: ImagePickerResponse) => {
+    const uploadImageToFirebase = (image) => {
       if (user) {
         const userId = user.uid;
-        const storageRef = ref(storage, `users/${userId}/profileImage/${image.fileName}`);
+        const storageRef = sRef(storage, `users/${userId}/profileImage/${image.assets[0].fileName}`);
 
-        uploadBytes(storageRef, profileImage)
-          .then(() => {
+        // carregar imagem para o storage
+        uploadBytesResumable(storageRef, image)
+          .then((snapshot) => {
+            getDownloadURL(storageRef).then((url) => {
+              updateProfile(user, { photoURL: url });
+              set(dRef(db, 'users/' + userId + '/profile/'), {
+                profile_picture: url,
+              });
+            });
             Alert.alert('Sucesso', 'Imagem de perfil alterada com sucesso.');
           })
           .catch((error) => {
@@ -79,7 +85,7 @@ function HomeScreen() {
       </View>
       <View style={styles.body}>
         <Pressable onPress={uploadProfileImage}>
-          <Image style={styles.profileImage} source={user?.photoURL || undefined} />
+          <Image style={styles.profileImage} source={{ uri: selectedImage }} />
         </Pressable>
         <Text style={styles.profileName} >{user?.displayName}</Text>
         <Text style={styles.profileEmail} >{user?.email}</Text>
@@ -179,3 +185,7 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
+function setSelectedImage(imageUri: string | undefined) {
+  throw new Error('Function not implemented.');
+}
+
