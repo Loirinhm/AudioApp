@@ -115,26 +115,6 @@ function HomeScreen() {
     }
   };
 
-  //
-  const renderMenuModal = () => {
-    return (
-      <View style={styles.menuModal}>
-        <Pressable onPress={() => convertAndUpload('mp3')}>
-          <Text>Convert to MP3 & Upload</Text>
-        </Pressable>
-        <Pressable onPress={() => convertAndUpload('mp4')}>
-          <Text>Convert to MP4 & Upload</Text>
-        </Pressable>
-        <Pressable onPress={downloadToDevice}>
-          <Text>Download to Device</Text>
-        </Pressable>
-        <Pressable onPress={() => setSelectedAudioFile(null)}>
-          <Text>Cancel</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
   return (
     <LinearGradient
       style={styles.background}
