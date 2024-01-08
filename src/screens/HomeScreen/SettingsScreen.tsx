@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
     height: '100%',
     paddingHorizontal: 16,
-    backgroundColor: 'red',
   },
   accountSection__title: {
     marginBottom: 20,
@@ -103,8 +102,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'green',
   },
   accountSection__account__icon: {
     width: 24,

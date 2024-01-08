@@ -1,19 +1,72 @@
 /* eslint-disable prettier/prettier */
 import React, { useState } from 'react';
+import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
-import { View, StyleSheet, Pressable, Text, Modal, Alert } from 'react-native';
+import { View, StyleSheet, Pressable, Text, Modal, Alert, TextInput } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
+import { updateProfile } from 'firebase/auth';
 
 function AccountScreen() {
   const navigation = useNavigation();
+  const auth = FIREBASE_AUTH;
 
   const arrowLeft = (<Icon name="arrow-left" size={24} color="#18181a" />);
   const edit = (<Icon name="edit" size={24} color="#18181a" />);
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisibleName, setModalVisibleName] = useState(false);
+  const [modalVisibleEmail, setModalVisibleEmail] = useState(false);
+  const [modalVisiblePassword, setModalVisiblePassword] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
+  const handleSaveName = () => {
+    const user = auth.currentUser;
+    if (user) {
+      updateProfile(user, {
+        displayName: newName,
+      }).then(() => {
+        Alert.alert('Sucesso', 'Nome alterado com sucesso.');
+      }).catch((error) => {
+        Alert.alert('Erro', 'Ocorreu um erro ao alterar o nome.');
+      });
+    }
+    setNewName('');
+    setModalVisibleName(!modalVisible);
+  };
+
+  const handleSaveEmail = () => {
+    const user = auth.currentUser;
+    if (user) {
+      updateProfile(user, {
+        email: newEmail,
+      }).then(() => {
+        Alert.alert('Sucesso', 'Email alterado com sucesso.');
+      }).catch((error) => {
+        Alert.alert('Erro', 'Ocorreu um erro ao alterar o email.');
+      });
+    }
+    setNewEmail('');
+    setModalVisibleEmail(!modalVisible);
+  };
+
+  const handleSavePassword = () => {
+    const user = auth.currentUser;
+    if (user) {
+      updateProfile(user, {
+        password: newPassword,
+      }).then(() => {
+        Alert.alert('Sucesso', 'Palavra passe alterada com sucesso.');
+      }).catch((error) => {
+        Alert.alert('Erro', 'Ocorreu um erro ao alterar a palavra passe.');
+      });
+    }
+    setNewPassword('');
+    setModalVisiblePassword(!modalVisible);
+  };
 
   return (
     <LinearGradient
@@ -29,29 +82,106 @@ function AccountScreen() {
       <View style={styles.body}>
         <View style={styles.accountInfo}>
           <Text style={styles.accountInfo__text}>Nome</Text>
-          <Pressable onPress={() => setModalVisible(true)}>{edit}</Pressable>
+          <Pressable onPress={() => setModalVisibleName(true)}>{edit}</Pressable>
           <Modal
             animationType="slide"
             transparent={true}
-            visible={modalVisible}
+            visible={modalVisibleName}
             onRequestClose={() => {
-              Alert.alert('Fechado');
-              setModalVisible(!modalVisible)
+              setModalVisibleName(!modalVisibleName);
             }}>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <View style={{ width: '80%', height: '30%', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', borderRadius: 20 }}>
-                <Text style={{ fontSize: 20, fontFamily: FontFamily.interBold, color: Color.colorGray_100 }}>Editar nome</Text>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>Editar nome</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Novo nome"
+                  onChangeText={(text) => setNewName(text)}
+                  value={newName}
+                />
+                <View style={styles.buttonContainer}>
+                  <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSaveName}>
+                    <Text style={styles.buttonText}>Guardar</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisibleName(false)}
+                  >
+                    <Text style={styles.buttonText}>Cancelar</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </Modal>
         </View>
         <View style={styles.accountInfo}>
           <Text style={styles.accountInfo__text}>Endereço de e-mail</Text>
-          <Pressable>{edit}</Pressable>
+          <Pressable onPress={() => setModalVisibleEmail(true)}>{edit}</Pressable>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisibleEmail}
+            onRequestClose={() => {
+              setModalVisibleEmail(!modalVisibleEmail);
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>Editar endereço de e-mail</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Novo endereço de e-mail"
+                  onChangeText={(text) => setNewEmail(text)}
+                  value={newEmail}
+                />
+                <View style={styles.buttonContainer}>
+                  <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSaveEmail}>
+                    <Text style={styles.buttonText}>Guardar</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisibleEmail(false)}
+                  >
+                    <Text style={styles.buttonText}>Cancelar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
         <View style={styles.accountInfo}>
           <Text style={styles.accountInfo__text}>Palavra passe</Text>
-          <Pressable>{edit}</Pressable>
+          <Pressable onPress={() => setModalVisiblePassword(true)}>{edit}</Pressable>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisiblePassword}
+            onRequestClose={() => {
+              setModalVisiblePassword(!modalVisiblePassword);
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>Editar palavra-passe</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nova palavra-passe"
+                  onChangeText={(text) => setNewPassword(text)}
+                  value={newPassword}
+                  secureTextEntry={true}
+                />
+                <View style={styles.buttonContainer}>
+                  <Pressable style={[styles.button, styles.buttonSave]} onPress={handleSavePassword}>
+                    <Text style={styles.buttonText}>Guardar</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisiblePassword(false)}
+                  >
+                    <Text style={styles.buttonText}>Cancelar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </View>
     </LinearGradient >
@@ -102,6 +232,55 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.interRegular,
     color: Color.colorGray_100,
     textAlign: 'left',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: FontFamily.interBold,
+    color: Color.colorGray_100,
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  button: {
+    borderRadius: 5,
+    padding: 10,
+    width: 100,
+    alignItems: 'center',
+  },
+  buttonSave: {
+    backgroundColor: '#5e5e5e',
+  },
+  buttonClose: {
+    backgroundColor: '#ccc',
+  },
+  buttonText: {
+    color: '#fff',
+    fontFamily: FontFamily.interRegular,
+    fontSize: 16,
   },
 });
 

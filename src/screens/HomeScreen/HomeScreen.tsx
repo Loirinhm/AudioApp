@@ -1,10 +1,11 @@
 /* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
-import { FIREBASE_AUTH, FIRESTORE } from '../../firebase/firebaseConfig';
+import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
+import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, collection } from 'firebase/firestore';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -19,18 +20,13 @@ function HomeScreen() {
   const navigation = useNavigation();
   const storage = getStorage();
   const auth = FIREBASE_AUTH;
-  const db = FIRESTORE;
+  const db = getDatabase();
   const user = auth.currentUser;
 
   // upload de ficheiros de áudio para o storage e firestore
   const handleAudioFile = async () => {
     try {
-      const userId = user.uid;
-      // verificar se o utilizador está autenticado
-      if (!user) {
-        Alert.alert('Erro', 'Não está autenticado.');
-        return;
-      }
+      const userId = user?.uid;
 
       // para selecionar vários ficheiros audio
       const results = await DocumentPicker.pick({
@@ -38,22 +34,15 @@ function HomeScreen() {
         type: [DocumentPicker.types.audio],
       });
 
-      // definir 
-      const userFilesRef = collection(db, 'userFiles');
-      const docRef = await setDoc(doc(userFilesRef, userId), {});
-
       // adicionar ficheiros áudio ao firestore e storage
       for (const result of results) {
 
         // adicionar ficheiros ao storage
-        const storageRef = ref(storage, `users/${userId}/audio/${result.name}`);
+        const storageRef = sRef(storage, `users/${userId}/audio/${result.name}`);
         const snapshot = await uploadBytes(storageRef, result);
 
-        //
-        const audioFileRef = collection(db, `userFiles/${userId}/files`);
-
-        // adicionar ficheiros ao firestore
-        await setDoc(doc(audioFileRef), {
+        // adicionar ficheiros ao realtime database
+        set(dRef(db, 'users/' + userId + '/audioFiles/' + result.size), {
           fileName: result.name,
           fileSize: result.size,
           fileType: result.type,
@@ -74,25 +63,24 @@ function HomeScreen() {
     }
   };
 
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  // obter ficheiros de áudio do realtime database
+  const [audioFiles, setAudioFiles] = useState([]);
 
-  // useEffect(() => {
-  //   if (user) {
-  //     const userId = user.uid;
-  //     const userFilesRef = collection(firestore, 'userFiles').doc(userId).collection('files');
+  useEffect(() => {
+    const userId = user?.uid;
 
-  //     // Subscribe to user-specific file updates from Firestore
-  //     const unsubscribe = userFilesRef.onSnapshot((snapshot) => {
-  //       const files = snapshot.docs.map(doc => doc.data().fileName);
-  //       setUploadedFiles(files);
-  //     });
-
-  //     return () => {
-  //       // Unsubscribe from Firestore updates when component unmounts
-  //       unsubscribe();
-  //     };
-  //   }
-  // }, []);
+    const starCountRef = dRef(db, `users/${userId}/audioFiles/`);
+    onValue(starCountRef, (snapshot) => {
+      const fetchFiles = [];
+      snapshot.forEach((childSnapshot) => {
+        fetchFiles.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val(),
+        });
+      });
+      setAudioFiles(fetchFiles);
+    });
+  }, [db, user]);
 
   return (
     <LinearGradient
@@ -112,7 +100,12 @@ function HomeScreen() {
         <View style={styles.audioList}>
           <Text style={styles.audioList__title}>Recentes</Text>
           <ScrollView>
-
+            {audioFiles.map((file, index) => (
+              <View key={file.id} style={styles.audioItem}>
+                <Text>{file.fileName}</Text>
+                {/* Add other details you want to display */}
+              </View>
+            ))}
           </ScrollView>
         </View>
       </View>
@@ -150,7 +143,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: 'red',
     alignItems: 'center',
   },
   addButton: {
@@ -185,6 +177,11 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontFamily: FontFamily.interBold,
     color: Color.colorGray_100,
+  },
+  audioItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   bottomMenu: {
     width: '100%',
