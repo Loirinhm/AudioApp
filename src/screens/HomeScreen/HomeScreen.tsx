@@ -4,7 +4,7 @@ import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
-import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -140,24 +140,30 @@ function HomeScreen() {
               </View>
             ))}
           </ScrollView>
-          {isModalVisible && (
-            <View style={styles.modalContainer}>
-              <View style={styles.menuModal}>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={() => {
+              setIsModalVisible(!isModalVisible);
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
                 <Pressable style={styles.modalOption} onPress={() => convertAndUpload('mp3')}>
-                  <Text>Converter para MP3 e carregar</Text>
+                  <Text style={styles.modalText}>Converter para MP3 e carregar</Text>
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={() => convertAndUpload('mp4')}>
-                  <Text>Converter para MP4 e carregar</Text>
+                  <Text style={styles.modalText} >Converter para MP4 e carregar</Text>
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={downloadToDevice}>
-                  <Text>Transferir para o dispositivo</Text>
+                  <Text style={styles.modalText}>Transferir para o dispositivo</Text>
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={closeModal}>
-                  <Text>Cancelar</Text>
+                  <Text style={styles.modalText}>Cancelar</Text>
                 </Pressable>
               </View>
             </View>
-          )}
+          </Modal>
         </View>
       </View>
       <View style={styles.bottomMenu}>
@@ -246,23 +252,29 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  modalContainer: {
+  centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  menuModal: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+  modalView: {
     width: '80%',
-    elevation: 5,
+    backgroundColor: Color.colorGray_100,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
   },
   modalOption: {
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+  },
+  modalText: {
+    fontSize: FontSize.sm,
+    fontFamily: FontFamily.interBold,
+    color: Color.colorHalfWhite,
+    marginBottom: 20,
   },
   bottomMenu: {
     width: '100%',
