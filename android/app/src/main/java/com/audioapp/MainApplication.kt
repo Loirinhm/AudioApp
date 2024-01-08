@@ -11,6 +11,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.flipper.ReactNativeFlipper
 import com.facebook.soloader.SoLoader
+import com.rnim.rn.audio.ReactNativeAudioPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -18,7 +19,11 @@ class MainApplication : Application(), ReactApplication {
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> {
           // Packages that cannot be autolinked yet can be added manually here, for example:
+<<<<<<< HEAD
           // packages.add( );
+=======
+          packages.add(new ReactNativeAudioTranscoderPackage());
+>>>>>>> 2caa579a71dea0d45cd5139d54be1d8d78708628
           return PackageList(this).packages
         }
 

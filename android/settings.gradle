@@ -1,4 +1,10 @@
 rootProject.name = 'AudioApp'
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
 include ':app'
+<<<<<<< HEAD
 includeBuild('../node_modules/@react-native/gradle-plugin')
+=======
+includeBuild('../node_modules/@react-native/gradle-plugin')
+include ':react-native-audio-transcoder'
+project(':react-native-audio-transcoder').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-audio-transcoder/android')
+>>>>>>> 2caa579a71dea0d45cd5139d54be1d8d78708628
