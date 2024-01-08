@@ -5,6 +5,7 @@ import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
+
 import { LinearGradient } from 'react-native-linear-gradient';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -99,10 +100,41 @@ function HomeScreen() {
   // 
   const convertAndUpload = async (format) => {
     if (selectedAudioFile) {
-      // Convert and upload logic based on format (mp3 or mp4)
-      // For simplicity, I'm just using a console log here.
-      console.log(`Converting and uploading ${format} format for ${selectedAudioFile.fileName}`);
-      // You can add the actual conversion and upload logic here.
+      try {
+        // Criar um caminho para armazenar localmente o ficheiro de áudio convertido
+        const localPath = `${AudioUtils.DocumentDirectoryPath}/${selectedAudioFile.fileName}.${format}`;
+
+        // Converter o ficheiro de áudio
+        const encoder = new AudioEncoder(localPath, {
+          inputFormat: selectedAudioFile.fileType,
+          outputFormat: format === 'mp3' ? 'mp3' : 'mp4',
+        });
+
+        encoder.prepare().then(() => {
+          // lógica para converter e fazer upload do ficheiro de áudio
+          encoder.start().then(() => {
+            const userId = user?.uid;
+            const storageRef = sRef(storage, `users/${userId}/audio/${selectedAudioFile.fileName}.${format}`);
+            uploadBytes(storageRef, localPath).then(async (snapshot) => {
+              await set(dRef(db, 'users/' + userId + '/audioFiles/' + snapshot.totalBytes), {
+                fileName: `${selectedAudioFile.fileName}.${format}`,
+                fileSize: snapshot.totalBytes,
+                fileType: format === 'mp3' ? 'audio/mp3' : 'audio/mp4',
+                filePath: `users/${userId}/audio/${selectedAudioFile.fileName}.${format}`,
+                timestamp: new Date().toISOString(),
+                downloadUrl: await getDownloadURL(snapshot.ref),
+              });
+              Alert.alert('Successo', `Convertido e carregado ${format.toUpperCase()} com sucesso.`);
+            }).catch((error) => {
+              console.error('Erro ao carregar o ficheiro convertido:', error);
+              Alert.alert('Erro', 'Falha ao carregar o ficheiro convertido.');
+            });
+          });
+        });
+      } catch (error) {
+        console.error('Erro de conversão:', error);
+        Alert.alert('Erro', 'Falha ao converter o ficheiro de áudio.');
+      }
     }
   };
 

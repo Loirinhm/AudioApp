@@ -16,6 +16,7 @@
     "react": "18.2.0",
     "react-native": "0.73.0",
     "react-native-audio-toolkit": "^1.0.6",
+    "react-native-audio-transcoder": "^0.3.0",
     "react-native-document-picker": "^9.1.0",
     "react-native-image-picker": "^7.1.0",
     "react-native-linear-gradient": "^2.8.3",
