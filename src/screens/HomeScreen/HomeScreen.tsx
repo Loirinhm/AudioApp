@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-
+import RNFFmpeg from 'react-native-ffmpeg';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
 
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
   },
   modalText: {
-    fontSize: FontSize.sm,
+    fontSize: FontSize.size_sm,
     fontFamily: FontFamily.interBold,
     color: Color.colorHalfWhite,
     marginBottom: 20,
