@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import RNFFmpeg from 'react-native-ffmpeg';
+import { RNFFmpeg } from 'react-native-ffmpeg';
+import RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
 
@@ -102,34 +103,37 @@ function HomeScreen() {
   const convertAndUpload = async (format) => {
     if (selectedAudioFile) {
       try {
-        const inputPath = `path/to/your/audio/files/${selectedAudioFile.fileName}`; // Update with the actual path
-        let outputPath = `path/to/your/output/files/${selectedAudioFile.fileName.replace(/\.[^/.]+$/, '')}.${format}`;
+        // Converter o ficheiro de áudio utilizando FFMPEG com base no formato selecionado
+        let outputPath = `path/to/converted/audio.${format}`; // Provide a path where you want to save the converted file
+        let inputPath = `path/to/original/audio/${selectedAudioFile.fileName}`; // Provide the path to the original audio file
+        let command;
 
-        const result = await AudioTranscoder.convert({
-          inputPath,
-          outputPath,
-          outputFormat: format, // 'mp3' or 'mp4'
-        });
+        if (format === 'mp3') {
+          command = `-i ${inputPath} -acodec mp3 ${outputPath}`;
+        } else if (format === 'mp4') {
+          command = `-i ${inputPath} -acodec copy ${outputPath}`;
+        }
 
-        if (result.success) {
-          console.log(`Conversion successful. Uploading ${format} file to Firestore...`);
+        const execution = await RNFFmpeg.execute(command?.split(' '));
 
-          // Upload the converted file to Firestore
-          const userId = user?.uid;
-          const convertedStorageRef = sRef(storage, `users/${userId}/audio/${outputPath}`);
-          const convertedSnapshot = await uploadBytes(convertedStorageRef, result.outputFile);
+        if (execution.rc === 0) {
+          // The conversion was successful
+          // Now, upload the converted file to Firestore
+          const storageRef = sRef(storage, `converted/${selectedAudioFile.fileName}.${format}`);
+          const blob = await RNFFmpeg.vFS.read(outputPath); // Read the converted file as a blob
+          const snapshot = await uploadBytes(storageRef, blob);
 
-          // Update the Firestore with the converted file details
-          set(dRef(db, 'users/' + userId + '/audioFiles/' + result.outputFile.size), {
-            fileName: result.outputFile.name,
-            fileSize: result.outputFile.size,
-            fileType: result.outputFile.type,
-            filePath: `users/${userId}/audio/${result.outputFile.name}`,
+          // Update Firestore with the converted file details
+          set(dRef(db, 'users/' + user?.uid + '/convertedAudioFiles/' + snapshot.metadata.size), {
+            fileName: `${selectedAudioFile.fileName}.${format}`,
+            fileSize: snapshot.metadata.size,
+            fileType: `audio/${format}`,
+            filePath: `converted/${selectedAudioFile.fileName}.${format}`,
             timestamp: new Date().toISOString(),
-            downloadUrl: await getDownloadURL(convertedSnapshot.ref),
+            downloadUrl: await getDownloadURL(snapshot.ref),
           });
 
-          Alert.alert('Success', `File converted to ${format} and uploaded successfully.`);
+          Alert.alert('Success', 'File converted and uploaded successfully!');
         } else {
           Alert.alert('Error', 'Failed to convert the audio file.');
         }
@@ -142,11 +146,31 @@ function HomeScreen() {
 
   const downloadToDevice = async () => {
     if (selectedAudioFile) {
-      // Download logic to the device
-      // For simplicity, I'm just using a console log here.
-      console.log(`Downloading ${selectedAudioFile.fileName} to device.`);
-      // You can add the actual download logic here.
+      try {
+        // Obter o URL de transferência do ficheiro áudio selecionado a partir do Firestore
+        const downloadUrl = selectedAudioFile.downloadUrl;
+
+        // Defina o caminho onde pretende guardar o ficheiro descarregado no dispositivo
+        const filePath = `${RNFS.DocumentDirectoryPath}/${selectedAudioFile.fileName}`;
+
+        // Descarregar o ficheiro do Firebase Storage utilizando o URL de descarregamento
+        const downloadResult = await RNFS.downloadFile({
+          fromUrl: downloadUrl,
+          toFile: filePath,
+          progressDivider: 10,
+        }).promise;
+
+        if (downloadResult.statusCode === 200) {
+          Alert.alert('Successo', 'Ficheiro transferido com sucesso para o dispositivo!');
+        } else {
+          Alert.alert('Erro', 'Falha ao descarregar o ficheiro.');
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+        Alert.alert('Erro', 'Ocorreu um erro ao descarregar o ficheiro.');
+      }
     }
+    closeModal();
   };
 
   return (
