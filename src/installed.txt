@@ -12,3 +12,9 @@ npm install --save react-native-vector-icons
 
 firebase
 npm install firebase
+
+ffmpeg-kit
+
+react-native-document-picker
+
+react-native-image-picker

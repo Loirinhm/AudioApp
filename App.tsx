@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { FIREBASE_AUTH } from './src/firebase/firebaseConfig';
 
-import { Login, LoginScreen, HomeScreen, ProfileScreen, RegistrationScreen, SettingsScreen, AccountScreen } from './src/screens/index';
+import { LoginScreen, HomeScreen, ProfileScreen, RegistrationScreen, SettingsScreen, AccountScreen } from './src/screens/index';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,7 +37,6 @@ function App(): React.JSX.Element {
         </Stack.Navigator>
       ) : (
         <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
           <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="RegistrationScreen" component={RegistrationScreen} options={{ headerShown: false }} />
         </Stack.Navigator>

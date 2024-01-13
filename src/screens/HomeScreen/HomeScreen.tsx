@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { RNFFmpeg } from 'react-native-ffmpeg';
-import RNFS from 'react-native-fs';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
-
+import { FFmpegKit, FFmpegKitConfig, ReturnCode } from 'ffmpeg-kit-react-native';
+import RNFetchBlob, { RNFetchBlobStat } from 'rn-fetch-blob';
 import { LinearGradient } from 'react-native-linear-gradient';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -39,10 +38,13 @@ function HomeScreen() {
 
       // adicionar ficheiros áudio ao firestore e storage
       for (const result of results) {
+        // converter o uri para blob
+        const file = await uriToBlob(result.uri);
+        console.log('HEREEEE: ' + result.uri);
 
         // adicionar ficheiros ao storage
         const storageRef = sRef(storage, `users/${userId}/audio/${result.name}`);
-        const snapshot = await uploadBytes(storageRef, result);
+        const snapshot = await uploadBytes(storageRef, file);
 
         // adicionar ficheiros ao realtime database
         set(dRef(db, 'users/' + userId + '/audioFiles/' + result.size), {
@@ -53,8 +55,9 @@ function HomeScreen() {
           timestamp: new Date().toISOString(),
           downloadUrl: await getDownloadURL(snapshot.ref),
         });
+
+        Alert.alert('Successo', 'Os ficheiros de áudio foram carregados.');
       }
-      Alert.alert('Successo', 'Os ficheiros de áudio foram carregados.');
 
     } catch (error) {
       if (DocumentPicker.isCancel(error)) {
@@ -65,6 +68,34 @@ function HomeScreen() {
       }
     }
   };
+
+  // criar blob a partir do ficheiro selecionado
+  function uriToBlob(uri: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // If successful -> return with blob
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+
+      // reject on error
+      xhr.onerror = function () {
+        reject(new Error('uriToBlob failed'));
+      };
+
+      // Set the response type to 'blob' - this means the server's response 
+      // will be accessed as a binary object
+      xhr.responseType = 'blob';
+
+      // Initialize the request. The third argument set to 'true' denotes 
+      // that the request is asynchronous
+      xhr.open('GET', uri, true);
+
+      // Send the request. The 'null' argument means that no body content is given for the request
+      xhr.send(null);
+    });
+  }
 
   // obter ficheiros de áudio do realtime database
   const [audioFiles, setAudioFiles] = useState([]);
@@ -99,51 +130,82 @@ function HomeScreen() {
     setSelectedAudioFile(null);
   };
 
-  // 
+  // Converter o ficheiro de áudio utilizando FFMPEG com base no formato selecionado
   const convertAndUpload = async (format) => {
-    if (selectedAudioFile) {
-      try {
-        // Converter o ficheiro de áudio utilizando FFMPEG com base no formato selecionado
-        let outputPath = `path/to/converted/audio.${format}`; // Provide a path where you want to save the converted file
-        let inputPath = `path/to/original/audio/${selectedAudioFile.fileName}`; // Provide the path to the original audio file
-        let command;
+    if (!selectedAudioFile) {
+      console.error('selectedAudioFile is null or undefined');
+      Alert.alert('Erro', 'Ficheiro de áudio não selecionado.');
+      return;
+    }
 
-        if (format === 'mp3') {
-          command = `-i ${inputPath} -acodec mp3 ${outputPath}`;
-        } else if (format === 'mp4') {
-          command = `-i ${inputPath} -acodec copy ${outputPath}`;
-        }
+    try {
+      const userId = user?.uid;
+      const { fs } = RNFetchBlob;
 
-        const execution = await RNFFmpeg.execute(command?.split(' '));
+      const { downloadUrl, fileName } = selectedAudioFile;
+      console.log(downloadUrl);
 
-        if (execution.rc === 0) {
-          // The conversion was successful
-          // Now, upload the converted file to Firestore
-          const storageRef = sRef(storage, `converted/${selectedAudioFile.fileName}.${format}`);
-          const blob = await RNFFmpeg.vFS.read(outputPath); // Read the converted file as a blob
-          const snapshot = await uploadBytes(storageRef, blob);
+      let command;
+      let outputFilePath = `${fs.dirs.DocumentDir}/converted_audio.${format}`;
 
-          // Update Firestore with the converted file details
+      const temporaryFilePath = RNFetchBlob.fs.dirs.DocumentDir + `${fs.dirs.DocumentDir}/${fileName}`;
+      RNFetchBlob
+        .config({ path: temporaryFilePath })
+        .fetch('GET', downloadUrl)
+        .then((res) => {
+          console.log('The file saved to ', res.path());
+        });
+
+      switch (format) {
+        case 'mp3':
+          command = `-hide_banner -y -i ${temporaryFilePath} -c:a libmp3lame -qscale:a 2 ${outputFilePath}`;
+          break;
+        case 'ogg':
+          command = `-hide_banner -y -i ${temporaryFilePath} -c:a libvorbis -b:a 64k ${outputFilePath}`;
+          break;
+        default:
+          Alert.alert('Erro', 'Formato de áudio inválido.');
+          return;
+      }
+
+      FFmpegKit.executeAsync(command, async (session) => {
+        const state = FFmpegKitConfig.sessionStateToString(await session.getState());
+        const returnCode = await session.getReturnCode();
+        const failStackTrace = await session.getFailStackTrace();
+
+        if (ReturnCode.isSuccess(returnCode)) {
+          // carregar o ficheiro convertido para o Firebase Storage
+          const filePath = `file://${outputFilePath}`;
+          const file = await uriToBlob(filePath);
+          const storageRef = sRef(storage, `users/${userId}/audio/${fileName}.${format}`);
+          const snapshot = await uploadBytes(storageRef, file);
+
+          // adicionar ficheiros ao realtime database
           set(dRef(db, 'users/' + user?.uid + '/convertedAudioFiles/' + snapshot.metadata.size), {
             fileName: `${selectedAudioFile.fileName}.${format}`,
             fileSize: snapshot.metadata.size,
-            fileType: `audio/${format}`,
+            fileType: `${format}`,
             filePath: `converted/${selectedAudioFile.fileName}.${format}`,
             timestamp: new Date().toISOString(),
             downloadUrl: await getDownloadURL(snapshot.ref),
           });
 
-          Alert.alert('Success', 'File converted and uploaded successfully!');
+          Alert.alert('Successo', 'Ficheiro convertido e carregado com sucesso!');
+        } else if (ReturnCode.isCancel(returnCode)) {
+          Alert.alert('Erro', 'A conversão foi cancelada.');
         } else {
-          Alert.alert('Error', 'Failed to convert the audio file.');
+          Alert.alert('Erro', 'Falha ao converter o ficheiro de áudio.');
         }
-      } catch (error) {
-        console.error('Erro de conversão:', error);
-        Alert.alert('Erro', 'Falha ao converter o ficheiro de áudio.');
-      }
+      });
+    } catch (error) {
+      console.error('Erro de conversão:', error);
+      Alert.alert('Erro', 'Falha ao converter o ficheiro de áudio.');
+    } finally {
+      closeModal();
     }
   };
 
+  // Descarregar o ficheiro de áudio selecionado para o dispositivo
   const downloadToDevice = async () => {
     if (selectedAudioFile) {
       try {
@@ -151,16 +213,14 @@ function HomeScreen() {
         const downloadUrl = selectedAudioFile.downloadUrl;
 
         // Defina o caminho onde pretende guardar o ficheiro descarregado no dispositivo
-        const filePath = `${RNFS.DocumentDirectoryPath}/${selectedAudioFile.fileName}`;
+        const filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/${selectedAudioFile.fileName}`;
 
         // Descarregar o ficheiro do Firebase Storage utilizando o URL de descarregamento
-        const downloadResult = await RNFS.downloadFile({
-          fromUrl: downloadUrl,
-          toFile: filePath,
-          progressDivider: 10,
-        }).promise;
+        const res = await RNFetchBlob.config({
+          path: filePath,
+        }).fetch('GET', downloadUrl);
 
-        if (downloadResult.statusCode === 200) {
+        if (res.respInfo.status === 200) {
           Alert.alert('Successo', 'Ficheiro transferido com sucesso para o dispositivo!');
         } else {
           Alert.alert('Erro', 'Falha ao descarregar o ficheiro.');
@@ -210,8 +270,8 @@ function HomeScreen() {
                 <Pressable style={styles.modalOption} onPress={() => convertAndUpload('mp3')}>
                   <Text style={styles.modalText}>Converter para MP3 e carregar</Text>
                 </Pressable>
-                <Pressable style={styles.modalOption} onPress={() => convertAndUpload('mp4')}>
-                  <Text style={styles.modalText} >Converter para MP4 e carregar</Text>
+                <Pressable style={styles.modalOption} onPress={() => convertAndUpload('ogg')}>
+                  <Text style={styles.modalText} >Converter para OGG e carregar</Text>
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={downloadToDevice}>
                   <Text style={styles.modalText}>Transferir para o dispositivo</Text>

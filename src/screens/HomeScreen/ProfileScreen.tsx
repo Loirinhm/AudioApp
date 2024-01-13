@@ -26,13 +26,8 @@ function HomeScreen() {
   const settings = (<Icon name="cog" size={24} color="#18181a" />);
 
   const uploadProfileImage = async () => {
-    const options = {
-      mediaType: 'photos',
-      quality: 1,
-    };
-
     // abrir seletor de imagens
-    launchImageLibrary(options, (response) => {
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
       if (response.didCancel) {
         console.log('Seleção de imagens cancelada pelo utilizador');
       }
@@ -46,13 +41,14 @@ function HomeScreen() {
       }
     });
 
-    const uploadImageToFirebase = (image) => {
+    const uploadImageToFirebase = async (image) => {
       if (user) {
         const userId = user.uid;
         const storageRef = sRef(storage, `users/${userId}/profileImage/${image.assets[0].fileName}`);
 
         // carregar imagem para o storage
-        uploadBytesResumable(storageRef, image)
+        const file = await uriToBlob(selectedImage);
+        uploadBytesResumable(storageRef, file)
           .then((snapshot) => {
             getDownloadURL(storageRef).then((url) => {
               updateProfile(user, { photoURL: url });
@@ -70,6 +66,34 @@ function HomeScreen() {
     };
   };
 
+  // criar blob a partir do ficheiro selecionado
+  function uriToBlob(uri: string): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // If successful -> return with blob
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+
+      // reject on error
+      xhr.onerror = function () {
+        reject(new Error('uriToBlob failed'));
+      };
+
+      // Set the response type to 'blob' - this means the server's response 
+      // will be accessed as a binary object
+      xhr.responseType = 'blob';
+
+      // Initialize the request. The third argument set to 'true' denotes 
+      // that the request is asynchronous
+      xhr.open('GET', uri, true);
+
+      // Send the request. The 'null' argument means that no body content is given for the request
+      xhr.send(null);
+    });
+  }
+
   return (
     <LinearGradient
       style={styles.background}
@@ -85,7 +109,7 @@ function HomeScreen() {
       </View>
       <View style={styles.body}>
         <Pressable onPress={uploadProfileImage}>
-          <Image style={styles.profileImage} source={{ uri: selectedImage }} />
+          <Image style={styles.profileImage} source={{ uri: user?.photoURL }} />
         </Pressable>
         <Text style={styles.profileName} >{user?.displayName}</Text>
         <Text style={styles.profileEmail} >{user?.email}</Text>
@@ -185,7 +209,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-function setSelectedImage(imageUri: string | undefined) {
-  throw new Error('Function not implemented.');
-}
-

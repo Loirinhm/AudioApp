@@ -58,7 +58,7 @@ function RegistrationScreen() {
         <View style={styles.inputEmail}>
           <TextInput
             style={styles.inputText}
-            placeholder="Email"
+            placeholder="Endereço de e-mail"
             value={email}
             onChangeText={(text) => setEmail(text)}
             autoCapitalize="none"
@@ -77,7 +77,7 @@ function RegistrationScreen() {
         <View style={styles.inputConfirmPassword}>
           <TextInput
             style={styles.inputText}
-            placeholder="Confirm Password"
+            placeholder="Confirmar Palavra-passe"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={true}
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   largeTopAppBar__title: {
     marginTop: 68,
-    fontSize: 52,
+    fontSize: 36,
     letterSpacing: 0.5,
     lineHeight: 36,
     fontFamily: FontFamily.bebasNeueRegular,

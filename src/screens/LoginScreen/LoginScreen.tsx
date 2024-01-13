@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   largeTopAppBar__title: {
     marginTop: 68,
-    fontSize: 52,
+    fontSize: 36,
     letterSpacing: 0.5,
     lineHeight: 36,
     fontFamily: FontFamily.bebasNeueRegular,
