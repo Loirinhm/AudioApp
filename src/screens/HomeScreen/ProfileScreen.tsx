@@ -66,6 +66,16 @@ function HomeScreen() {
     };
   };
 
+  // logout
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error('Erro ao terminar a sessão:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao terminar a sessão.');
+    }
+  };
+
   // criar blob a partir do ficheiro selecionado
   function uriToBlob(uri: string): Promise<Blob> {
     return new Promise((resolve, reject) => {
@@ -113,6 +123,9 @@ function HomeScreen() {
         </Pressable>
         <Text style={styles.profileName} >{user?.displayName}</Text>
         <Text style={styles.profileEmail} >{user?.email}</Text>
+        <Pressable style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </Pressable>
       </View>
       <View style={styles.bottomMenu}>
         <Pressable style={styles.bottonMenu__unselected} onPress={() => navigation.navigate('HomeScreen')}>
@@ -181,6 +194,17 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.interRegular,
     color: '#18181a',
     textAlign: 'center',
+  },
+  logoutButton: {
+    marginTop: 200,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: Color.colorGray_100,
+    borderRadius: 10,
+  },
+  logoutButtonText: {
+    color: Color.colorHalfWhite, // Choose a color for the logout button text
+    fontSize: 16,
   },
   bottomMenu: {
     width: '100%',

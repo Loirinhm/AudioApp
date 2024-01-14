@@ -1,13 +1,14 @@
 /* eslint-disable prettier/prettier */
 import React, { useState } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
+import { updateProfile } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Pressable, Text, Modal, Alert, TextInput } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
-import { updateProfile } from 'firebase/auth';
+
 
 function AccountScreen() {
   const navigation = useNavigation();

@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
 import { getDatabase, ref as dRef, set, onValue } from 'firebase/database';
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 import { View, StyleSheet, Text, Pressable, ScrollView, Alert, Modal } from 'react-native';
 import { FFmpegKit, FFmpegKitConfig, ReturnCode } from 'ffmpeg-kit-react-native';
-import RNFetchBlob, { RNFetchBlobStat } from 'rn-fetch-blob';
+import RNFetchBlob from 'rn-fetch-blob';
 import { LinearGradient } from 'react-native-linear-gradient';
 import DocumentPicker from 'react-native-document-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -43,7 +43,7 @@ function HomeScreen() {
         console.log('HEREEEE: ' + result.uri);
 
         // adicionar ficheiros ao storage
-        const storageRef = sRef(storage, `users/${userId}/audio/${result.name}`);
+        const storageRef = sRef(storage, `users/${userId}/audioFiles/${result.name}`);
         const snapshot = await uploadBytes(storageRef, file);
 
         // adicionar ficheiros ao realtime database
@@ -63,7 +63,7 @@ function HomeScreen() {
       if (DocumentPicker.isCancel(error)) {
         // quando o utilizador cancela a seleção de ficheiros
       } else {
-        console.error('Error:', error);
+        console.error('Erro:', error);
         Alert.alert('Erro', 'Falha ao selecionar e carregar o ficheiro de áudio.');
       }
     }
@@ -174,18 +174,22 @@ function HomeScreen() {
         const failStackTrace = await session.getFailStackTrace();
 
         if (ReturnCode.isSuccess(returnCode)) {
+          // separar o nome do ficheiro e a extensão
+          const convertedFileName = fileName.split('.').slice(0, -1).join('.');
+          console.log(convertedFileName);
+
           // carregar o ficheiro convertido para o Firebase Storage
           const filePath = `file://${outputFilePath}`;
           const file = await uriToBlob(filePath);
-          const storageRef = sRef(storage, `users/${userId}/audio/${fileName}.${format}`);
+          const storageRef = sRef(storage, `users/${userId}/audioFiles/${convertedFileName}.${format}`);
           const snapshot = await uploadBytes(storageRef, file);
 
           // adicionar ficheiros ao realtime database
-          set(dRef(db, 'users/' + user?.uid + '/convertedAudioFiles/' + snapshot.metadata.size), {
-            fileName: `${selectedAudioFile.fileName}.${format}`,
+          set(dRef(db, 'users/' + user?.uid + '/audioFiles/' + snapshot.metadata.size), {
+            fileName: `${convertedFileName}.${format}`,
             fileSize: snapshot.metadata.size,
             fileType: `${format}`,
-            filePath: `converted/${selectedAudioFile.fileName}.${format}`,
+            filePath: `users/${userId}/audio/${convertedFileName}.${format}`,
             timestamp: new Date().toISOString(),
             downloadUrl: await getDownloadURL(snapshot.ref),
           });
@@ -213,7 +217,8 @@ function HomeScreen() {
         const downloadUrl = selectedAudioFile.downloadUrl;
 
         // Defina o caminho onde pretende guardar o ficheiro descarregado no dispositivo
-        const filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/${selectedAudioFile.fileName}`;
+        const filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/convertedFiles/${selectedAudioFile.fileName}`;
+        console.log(filePath);
 
         // Descarregar o ficheiro do Firebase Storage utilizando o URL de descarregamento
         const res = await RNFetchBlob.config({
@@ -231,6 +236,33 @@ function HomeScreen() {
       }
     }
     closeModal();
+  };
+
+  const deleteAudioFile = async () => {
+    if (!selectedAudioFile) {
+      console.error('selectedAudioFile é nulo ou indefinido');
+      Alert.alert('Erro', 'Ficheiro de áudio não selecionado.');
+      return;
+    }
+
+    try {
+      const userId = user?.uid;
+
+      // Eliminar do Firebase Storage
+      const storageRef = sRef(storage, `users/${userId}/audioFiles/${selectedAudioFile.fileName}`);
+      await deleteObject(storageRef);
+
+      // Eliminar da base de dados em tempo real
+      const dbRef = dRef(db, `users/${userId}/audioFiles/${selectedAudioFile.id}`);
+      await set(dbRef, null);
+
+      Alert.alert('Successo', 'Ficheiro de áudio removido com sucesso!');
+    } catch (error) {
+      console.error('Erro ao eliminar o ficheiro:', error);
+      Alert.alert('Erro', 'Falha ao eliminar o ficheiro de áudio.');
+    } finally {
+      closeModal();
+    }
   };
 
   return (
@@ -267,6 +299,7 @@ function HomeScreen() {
             }}>
             <View style={styles.centeredView}>
               <View style={styles.modalView}>
+                <Text style={styles.modalTitle}>Opções</Text>
                 <Pressable style={styles.modalOption} onPress={() => convertAndUpload('mp3')}>
                   <Text style={styles.modalText}>Converter para MP3 e carregar</Text>
                 </Pressable>
@@ -275,6 +308,9 @@ function HomeScreen() {
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={downloadToDevice}>
                   <Text style={styles.modalText}>Transferir para o dispositivo</Text>
+                </Pressable>
+                <Pressable style={styles.modalOption} onPress={deleteAudioFile}>
+                  <Text style={styles.modalText}>Eliminar o ficheiro</Text>
                 </Pressable>
                 <Pressable style={styles.modalOption} onPress={closeModal}>
                   <Text style={styles.modalText}>Cancelar</Text>
@@ -383,16 +419,25 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  modalTitle: {
+    marginBottom: 20,
+    fontSize: FontSize.size_9xl,
+    letterSpacing: 0.3,
+    lineHeight: 36,
+    fontFamily: FontFamily.interBold,
+    color: Color.colorHalfWhite,
+  },
   modalOption: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 10,
+    backgroundColor: Color.colorGray_400,
   },
   modalText: {
     fontSize: FontSize.size_sm,
     fontFamily: FontFamily.interBold,
     color: Color.colorHalfWhite,
-    marginBottom: 20,
   },
   bottomMenu: {
     width: '100%',

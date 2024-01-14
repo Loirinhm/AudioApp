@@ -26,11 +26,6 @@ function SettingsScreen() {
         <Text style={styles.smallTopAppBar__title}>Definições</Text>
       </View>
       <View style={styles.body}>
-        <View style={styles.directorySection}>
-          <Pressable style={styles.downloadButton}>
-
-          </Pressable>
-        </View>
         <View style={styles.accountSection}>
           <Text style={styles.accountSection__title}>Conta</Text>
           <View style={styles.accountSection__account}>

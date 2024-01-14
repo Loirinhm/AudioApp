@@ -1,9 +1,9 @@
 /* eslint-disable prettier/prettier */
 import React, { useState } from 'react';
 import { FIREBASE_AUTH } from '../../firebase/firebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView, View, StyleSheet, Text, TextInput, ActivityIndicator, Pressable } from 'react-native';
+import { SafeAreaView, View, StyleSheet, Text, TextInput, ActivityIndicator, Pressable, Alert, Button } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
 
 import { Color, FontFamily, FontSize } from '../GlobalStyles';
@@ -20,17 +20,27 @@ function RegistrationScreen() {
 
   const signUp = async () => {
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      Alert.alert('As palavras-passe não coincidem');
       return;
     }
 
     setLoading(true);
     try {
+      // registar o utilizador
       const response = await createUserWithEmailAndPassword(auth, email, password);
-      console.log(response);
+
+      // atualizar o nome do utilizador
+      const user = response.user;
+      await updateProfile(user, {
+        displayName: fullName,
+      });
+
+      await signOut(auth);
+
+      Alert.alert('Registo feito com sucesso');
     } catch (error) {
+      Alert.alert('Erro ao fazer o registo ', error.message);
       console.log(error);
-      alert('Erro ao fazer o registo' + (error as any).message);
     } finally {
       setLoading(false);
     }
@@ -87,7 +97,7 @@ function RegistrationScreen() {
         {loading ? <ActivityIndicator size="large" color="#0000ff" /> :
           <>
             <Pressable style={styles.loginButton} onPress={signUp}>
-              <Text style={styles.loginButton__text}>Criar conta</Text>
+              <Text style={styles.loginButton__text}>Fazer Registo</Text>
             </Pressable>
           </>
         }
@@ -99,10 +109,6 @@ function RegistrationScreen() {
       </SafeAreaView>
     </LinearGradient >
   );
-}
-
-function alert(_arg0: string) {
-  throw new Error('Function not implemented.');
 }
 
 const styles = StyleSheet.create({
