@@ -216,20 +216,33 @@ function HomeScreen() {
         // Obter o URL de transferência do ficheiro áudio selecionado a partir do Firestore
         const downloadUrl = selectedAudioFile.downloadUrl;
 
-        // Defina o caminho onde pretende guardar o ficheiro descarregado no dispositivo
-        const filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/convertedFiles/${selectedAudioFile.fileName}`;
-        console.log(filePath);
+        // Criar o caminho do ficheiro de destino
+        const docPath = RNFetchBlob.fs.dirs.DocumentDir;
+        console.log('docPath: ' + docPath);
+        const filePath = `${docPath}/audioFiles/`;
+        console.log('filePath: ' + filePath);
 
         // Descarregar o ficheiro do Firebase Storage utilizando o URL de descarregamento
-        const res = await RNFetchBlob.config({
+        RNFetchBlob.config({
           path: filePath,
-        }).fetch('GET', downloadUrl);
+          fileCache: true,
+        })
+          .fetch('GET', downloadUrl)
+          .then(async res => {
+            let status = res.info().status;
+            if (status === 200) {
+              console.log('The file saved to ', res.path());
+              Alert.alert('Successo', 'Ficheiro descarregado com sucesso!');
+            } else {
+              console.error('Erro ao descarregar o ficheiro:', status);
+              Alert.alert('Erro', 'Falha ao descarregar o ficheiro.');
+            }
 
-        if (res.respInfo.status === 200) {
-          Alert.alert('Successo', 'Ficheiro transferido com sucesso para o dispositivo!');
-        } else {
-          Alert.alert('Erro', 'Falha ao descarregar o ficheiro.');
-        }
+          })
+          .catch((errorMessage) => {
+            console.error('Erro ao descarregar o ficheiro:', errorMessage);
+            Alert.alert('Erro', 'Falha ao descarregar o ficheiro.');
+          });
       } catch (error) {
         console.error('Erro:', error);
         Alert.alert('Erro', 'Ocorreu um erro ao descarregar o ficheiro.');
